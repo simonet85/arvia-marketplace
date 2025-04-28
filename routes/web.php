@@ -23,6 +23,8 @@ Route::controller(FrontEndController::class)->group(function () {
   Route::get('/products', 'products')->name('products.index');
   Route::get('/about', 'about')->name('about');
   Route::get('/categories', 'categories')->name('categories');
+  Route::get('/products/fetch', 'fetch')->name('products.fetch');
+  Route::get('/products/search', 'fetch')->name('products.search');
 });
 
 Route::controller(ProductController::class)->group(function () {

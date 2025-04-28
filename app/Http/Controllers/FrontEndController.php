@@ -21,8 +21,12 @@ class FrontEndController extends Controller
    
     public function products(Request $request)
     {
-        $products = Product::paginate(9);
-        return view('products.index', compact('products'));
+        $products = Product::paginate(6);
+        return view('products.index', [
+            'products' => $products, 'totalPages' => $products->lastPage()
+        ]);
+
+       
     }
    
     public function about()
@@ -34,5 +38,70 @@ class FrontEndController extends Controller
     {
         return view('categories');
     }
+
+    public function fetch(Request $request)
+    {
+        $sort = $request->input('sort');
+        $page = $request->input('page', 1);
+        $categories = explode(',', $request->input('categories', ''));
+        $price = $request->input('price');
+        $skinType = $request->input('skin_type');
+        $bestseller = $request->input('bestseller');
+        $populars = $request->input('popular');
+        $newest = $request->input('newest');
+        $search = $request->input('search');
+    
+        $query = Product::query();
+    
+        // 🔥 Flexible Search
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+            });
+        }
+    
+        if (!empty($categories[0])) {
+            $query->whereIn('category', $categories);
+        }
+    
+        if ($price) {
+            $query->where('price', '<=', $price);
+        }
+    
+        if ($skinType) {
+            $query->where('skin_type', $skinType);
+        }
+    
+        if ($bestseller) {
+            $query->where('bestseller', true);
+        }
+    
+        if ($populars) {
+            $query->where('popular', true);
+        }
+    
+        if ($newest) {
+            $query->where('newest', true);
+        }
+    
+        // Sorting
+        if ($sort === 'price-asc') {
+            $query->orderBy('price', 'asc');
+        } elseif ($sort === 'price-desc') {
+            $query->orderBy('price', 'desc');
+        } elseif ($sort === 'newest') {
+            $query->latest();
+        } elseif ($sort === 'popular') {
+            $query->orderBy('popularity', 'desc');
+        }
+    
+        $products = $query->paginate(9, ['*'], 'page', $page);
+    
+        return view('partials.product-grid', compact('products'))->render();
+    }
+    
+    
+    
    
 }

@@ -19,8 +19,29 @@ class ProductFactory extends Factory
      */
     public function definition(): array
     {
-      
-        $name = $this->faker->words(3, true);
+        // Liste de noms de cosmétiques pour générer des produits
+
+        $cosmeticNames = [
+            'Hydrating Face Cream',
+            'Gentle Cleanser',
+            'Oil Control Serum',
+            'Nourishing Night Cream',
+            'Vitamin C Serum',
+            'Aloe Vera Gel',
+            'Rose Water Toner',
+            'Charcoal Detox Mask',
+            'Anti-Aging Eye Cream',
+            'SPF 50+ Sunscreen',
+            'Green Tea Moisturizer',
+            'Lip Repair Balm',
+            'Hyaluronic Acid Booster',
+            'Collagen Rejuvenating Serum',
+            'Shea Butter Body Lotion',
+        ];
+
+        // Choisir un nom de cosmétique aléatoire
+        $name = $this->faker->unique()->randomElement($cosmeticNames);
+        // Générer un slug à partir du nom
         $slug = Str::slug($name);
 
         // Générer une image Unsplash
