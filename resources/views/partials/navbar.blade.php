@@ -29,9 +29,15 @@
         <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">2</span>
       </a>
 
-      <a href="connexion.html" class="hover:text-black transition">
-        <i class="fas fa-user"></i>
-      </a>
+      @auth
+        <a href="{{ route('dashboard') }}" class="hover:text-black transition">
+          <i class="fas fa-user"></i>
+        </a>
+      @else
+        <a href="{{ route('login') }}" class="hover:text-black transition">
+          <i class="fas fa-user"></i>
+        </a>
+      @endauth
 
       <a href="list-commande.html" class="relative hover:text-black transition">
         <i class="fas fa-shopping-cart"></i>

@@ -162,7 +162,7 @@
       </div>
     </div>
 
-@include('partials.footer')
+
     <!-- JS Recherche + Filtres -->
     <script>
       const searchInput = document.getElementById("searchInput");

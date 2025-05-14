@@ -1,10 +1,11 @@
 <div class="bg-white rounded-lg shadow-md p-4 grid grid-cols-1 gap-4">
     <a href="{{ route('products.show', $product->id) }}" class="col-span-1">
-        <img
+        <!-- <img
             src="{{ asset('storage/' . $product->image) }}"
             alt="{{ $product->name }}"
             class="w-full h-60 object-cover rounded-md mb-4"
-        />
+        /> -->
+        <img :src="`/storage/${product.image}`" alt="Image produit"  class="w-full h-60 object-cover rounded-md mb-4" />
     </a>
     <div class="col-span-1">
         <h3 class="text-lg font-semibold mb-2">{{ $product->name }}</h3>

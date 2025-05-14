@@ -2,9 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Models\Category;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -59,17 +60,19 @@ class ProductFactory extends Factory
         return [
             'name' => ucfirst($name),
             'slug' => $slug,
-            'category_id' => $this->faker->numberBetween(1, 5),
+            'category_id' => Category::inRandomOrder()->first()?->id ?? Category::factory(), 
             'description' => $this->faker->paragraph(),
             'bestseller' => $this->faker->boolean(),
             'popular' => $this->faker->boolean(),
+            'featured' => $this->faker->boolean(30), // Ajout ici
             'skin_type' => $this->faker->randomElement(['dry', 'oily', 'combination', 'sensitive']),
             'price' => $this->faker->randomFloat(2, 5, 100),
             'stock' => $this->faker->numberBetween(10, 200),
-            'image' => $filename, // On enregistre seulement le chemin relatif
+            'image' => $filename,
             'created_at' => $this->faker->dateTimeBetween('-6 months', 'now'),
             'updated_at' => now(),
         ];
+        
         
     }
 }

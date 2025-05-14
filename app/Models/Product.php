@@ -12,20 +12,28 @@ class Product extends Model
         'name',
         'slug',
         'description',
-        'category',
+        'category_id',
         'price',
         'stock',
         'skin_type',
         'bestseller',
         'popular',
         'image',
+        'featured'
     ];
     protected $casts = [
         'bestseller' => 'boolean',
         'popular' => 'boolean',
+        'featured' => 'boolean',
     ];
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? asset('storage/' . $this->image) : null;
+    }
+
 }

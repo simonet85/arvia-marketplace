@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
 
 class FrontEndController extends Controller
@@ -16,7 +17,11 @@ class FrontEndController extends Controller
      */
     public function home()
     {
-        return view('welcome');
+        $featuredProducts = Product::where('featured', true)->take(4)->get();
+        //Get only the first 4 categories
+        $categories = Category::take(4)->get();
+
+        return view('welcome', compact('featuredProducts', 'categories'));
     }
    
     public function products(Request $request)

@@ -122,16 +122,4 @@
         </div>
       </div>
     </section>
-
-    <!-- Footer -->
-@include('partials.footer')
-
-    <!-- Script pour le menu mobile -->
-    <script>
-      const btn = document.getElementById("mobile-menu-button");
-      const menu = document.getElementById("mobile-menu-content");
-      btn.addEventListener("click", () => {
-        menu.classList.toggle("hidden");
-      });
-    </script>
 @endsection

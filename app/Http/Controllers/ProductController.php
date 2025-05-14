@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -16,33 +18,87 @@ class ProductController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            // 'slug' => 'required|string|max:255|unique:products,slug',
             'category_id' => 'required|integer',
             'description' => 'required|string',
             'price' => 'required|numeric',
             'stock' => 'required|integer',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'featured' => 'boolean',
+            'bestseller' => 'boolean',
+            'popular' => 'boolean',
+            'skin_type' => 'required|string',
+            // 'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+
         ]);
 
-        $imagePath = $request->file('image')->store('products', 'public');
+        // $imagePath = $request->file('image')->store('products', 'public');
+        $imagePath = $request->hasFile('image') ? 
+                     $request->file('image')->store('products', 'public') 
+                     : null;
 
         $product = Product::create([
             'name' => $request->name,
-            'category_id' => $request->category,
+            'slug' => Str::slug($request->name),
+            'featured' => $request->boolean('featured'),
+            'bestseller' => $request->boolean('bestseller'),
+            'popular' => $request->boolean('popular'),
+            'category_id' => $request->category_id,
             'description' => $request->description,
             'price' => $request->price,
             'stock' => $request->stock,
             'image' => $imagePath,
+            'skin_type' => $request->skin_type,
         ]);
 
-        return redirect()->route('products.index');
+        return response()->json(['message' => 'Produit enregistré', 'product' => $product]);
+        // return redirect()->route('products.index');
     }
-    public function update(Request $request, Product $product)
+    public function update(Request $request,  $id)
     {
-        $product->name = $request->name;
-        $product->price = $request->price;
-        $product->save();
+        // Valider les données du formulaire
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'category_id' => 'required|integer',
+            'description' => 'required|string',
+            'price' => 'required|numeric',
+            'stock' => 'required|integer',
+            'featured' => 'boolean',
+            'bestseller' => 'boolean',
+            'popular' => 'boolean',
+            'skin_type' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
-        return redirect()->route('products.index');
+        // Mettre à jour le produit
+        $product = Product::findOrFail($id);
+
+        // vérifier si l'image existe
+        if ($request->hasFile('image')) {
+            // Supprimer l'ancienne image si elle existe
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+        
+            // Stocker la nouvelle image
+            $imagePath = $request->file('image')->store('products', 'public');
+            $product->image = $imagePath;
+        }
+        // Mettre à jour les autres champs
+        $product->update([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'category_id' => $request->category_id,
+            'description' => $request->description,
+            'price' => $request->price,
+            'stock' => $request->stock,
+            'featured' => $request->boolean('featured'),
+            'bestseller' => $request->boolean('bestseller'),
+            'popular' => $request->boolean('popular'),
+            'skin_type' => $request->skin_type,
+        ]);
+        
+        return response()->json(['message' => 'Produit mis à jour', 'product' => $product]);
     }
     public function destroy(Product $product)
     {
@@ -60,7 +116,14 @@ class ProductController extends Controller
     }
     public function create()
     {
-        return view('products.create');
+        // Récupérer toutes les catégories pour le formulaire de création de produit
+        $categories = Category::all();
+        // Récupérer tous les produits pour le formulaire de création de produit
+        $products = Product::orderBy('created_at', 'desc')
+            ->orderBy('updated_at', 'desc')
+            ->paginate(9);
+        // Passer les catégories à la vue
+        return view('products.create', compact('categories', 'products'));
     }
     public function search(Request $request)
     {
@@ -90,4 +153,37 @@ class ProductController extends Controller
 
         return view('products.index', compact('products'));
     }
+
+    public function json(Request $request)
+    {
+        // $products = Product::with('category')->paginate(3);
+        $query = Product::with('category');
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+    
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+        return response()->json($query->paginate(9));
+
+        //return $query->paginate(3); // ou autre valeur par page
+        // return response()->json($products);
+    }
+    public function fetch()
+    {
+        $products = Product::all();
+        return response()->json($products);
+    }
+    // public function fetchByCategory($categoryId)
+    // {
+    //     $products = Product::where('category_id', $categoryId)->get();
+    //     return response()->json($products);
+    // }
+    // public function fetchBySlug($slug)
+    // {
+    //     $product = Product::where('slug', $slug)->first();
+    //     return response()->json($product);
+    // }
 }
