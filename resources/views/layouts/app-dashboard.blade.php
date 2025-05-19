@@ -17,6 +17,21 @@
       .container {
         @apply max-w-7xl mx-auto px-6 py-4 sm:px-6 lg:px-8;
       }
+      .fade-out {
+          animation: fadeOut 0.3s ease-out forwards;
+      }
+
+      @keyframes fadeOut {
+          from {
+              opacity: 1;
+              transform: scale(1);
+          }
+          to {
+              opacity: 0;
+              transform: scale(0.95);
+          }
+      }
+
     </style>
 
     <title>@yield('title', 'Tableau de bord')</title>

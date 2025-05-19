@@ -26,6 +26,7 @@ class Product extends Model
         'popular' => 'boolean',
         'featured' => 'boolean',
     ];
+    protected $appends = ['image_url'];
     public function category()
     {
         return $this->belongsTo(Category::class);

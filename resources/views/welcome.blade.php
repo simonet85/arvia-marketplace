@@ -79,8 +79,14 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       @foreach ($featuredProducts as $product)
         <div class="bg-white shadow-md rounded overflow-hidden p-4 transition duration-300 transform hover:scale-105">
-          <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->name }}"
-               class="w-full h-[200px] object-cover mb-4" />
+          <!-- <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->name }}"
+               class="w-full h-[200px] object-cover mb-4" /> -->
+      @if ($product->image)
+          <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-60 object-cover rounded-md mb-4" />
+      @else
+          <img src="https://via.placeholder.com/300x300?text=No+Image" alt="Pas d'image" class="w-full h-60 object-cover rounded-md mb-4" />
+      @endif
+
           <h4 class="font-bold mb-2">{{ $product->name }}</h4>
           <p>{{ number_format($product->price, 2, ',', ' ') }} €</p>
 

@@ -5,7 +5,12 @@
             alt="{{ $product->name }}"
             class="w-full h-60 object-cover rounded-md mb-4"
         /> -->
-        <img :src="`/storage/${product.image}`" alt="Image produit"  class="w-full h-60 object-cover rounded-md mb-4" />
+        @if ($product->image)
+            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-60 object-cover rounded-md mb-4" />
+        @else
+            <img src="https://via.placeholder.com/300x300?text=No+Image" alt="Pas d'image" class="w-full h-60 object-cover rounded-md mb-4" />
+        @endif
+
     </a>
     <div class="col-span-1">
         <h3 class="text-lg font-semibold mb-2">{{ $product->name }}</h3>

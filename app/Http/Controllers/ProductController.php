@@ -6,12 +6,17 @@ use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::paginate(9);
+        // $products = Product::paginate(9);
+        $products = Product::orderBy('created_at', 'desc')
+        ->orderBy('updated_at', 'desc')
+        ->paginate(9);
+
         return view('products.index', compact('products'));
     }
     public function store(Request $request)
@@ -97,14 +102,21 @@ class ProductController extends Controller
             'popular' => $request->boolean('popular'),
             'skin_type' => $request->skin_type,
         ]);
+
+        $product->refresh(); 
         
         return response()->json(['message' => 'Produit mis à jour', 'product' => $product]);
     }
-    public function destroy(Product $product)
+    public function destroy($id)
     {
+        // Trouver le produit par son ID
+        $product = Product::findOrFail($id);
+        // Vérifier si le produit a une image et la supprimer
+        if ($product->image && Storage::disk('public')->exists($product->image)) {
+            Storage::disk('public')->delete($product->image);
+        }
         $product->delete();
-
-        return redirect()->route('products.index');
+        return response()->json(['message' => 'Produit supprimé avec succès.']);
     }
     public function show(Product $product)
     {
@@ -128,15 +140,21 @@ class ProductController extends Controller
     public function search(Request $request)
     {
         $query = $request->input('query');
-        $products = Product::where('name', 'LIKE', "%{$query}%")->get();
+        $products = Product::where('name', 'LIKE', "%{$query}%")
+        ->orderBy('created_at', 'desc')
+        ->orderBy('updated_at', 'desc')
+        ->get();
 
         return view('products.index', compact('products'));
     }
     public function filter(Request $request)
     {
         $category = $request->input('category');
-        $products = Product::where('category_id', $category)->get();
-
+        $products = Product::where('category_id', $category)
+        ->orderBy('created_at', 'desc')
+        ->orderBy('updated_at', 'desc')
+        ->get();
+    
         return view('products.index', compact('products'));
     }
     public function sort(Request $request)
@@ -157,7 +175,11 @@ class ProductController extends Controller
     public function json(Request $request)
     {
         // $products = Product::with('category')->paginate(3);
-        $query = Product::with('category');
+        // $query = Product::with('category');
+        $query = Product::with('category')
+        ->orderBy('created_at', 'desc')
+        ->orderBy('updated_at', 'desc');
+
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
@@ -173,7 +195,11 @@ class ProductController extends Controller
     }
     public function fetch()
     {
-        $products = Product::all();
+        // $products = Product::all();
+        $products = Product::orderBy('created_at', 'desc')
+        ->orderBy('updated_at', 'desc')
+        ->get();
+
         return response()->json($products);
     }
     // public function fetchByCategory($categoryId)

@@ -14,6 +14,11 @@
             openProductForm: false,
             openDeleteModal: false,
             selectedProduct: null,
+            previewImage: null,
+
+            loading: false,
+            submitting: false,
+            deletingProductId: null,
 
             newProduct: {
                 id: null,
@@ -35,6 +40,7 @@
                 return Array.from({ length: this.totalPages }, (_, i) => i + 1);
             },
             fetchProducts(page = 1) {
+                this.loading = true;
                 const param = new URLSearchParams({
                     page,
                     search: this.search,
@@ -48,6 +54,9 @@
                         this.products = data.data;
                         this.currentPage = data.current_page;
                         this.totalPages = data.last_page;
+                    }) 
+                    .finally(() => {
+                        this.loading = false;
                     });
             },
             fetchCategories() {
@@ -58,6 +67,7 @@
                     });
             },
             submitForm() {
+                this.submitting = true;
                 const formData = new FormData();
                 formData.append('name', this.newProduct.name);
                 formData.append('description', this.newProduct.description);
@@ -75,7 +85,8 @@
 
                 const isEdit = !!this.newProduct.id;
                 const url = isEdit ? `/admin/products/${this.newProduct.id}` : '/admin/products';
-                const method = isEdit ? 'PUT' : 'POST';
+                // const method = isEdit ? 'PUT' : 'POST';
+                const method = 'POST';
 
                 if (isEdit) {
                     formData.append('_method', 'PUT');
@@ -96,6 +107,7 @@
                 .then(data => {
                     console.log('Product response:', data); // ✅ LOG RESPONSE HERE
                     if (data.product && data.product.image_url) {
+                        console.log('Product:', data.product); // ✅ CHECK IMAGE
                         console.log('Image URL:', data.product.image_url); // ✅ CHECK IMAGE
                     }
                     this.openProductForm = false;
@@ -117,6 +129,9 @@
                     //     position: "right",
                     //     backgroundColor: "#e63946"
                     // }).showToast();
+                })    
+                .finally(() => {
+                    this.submitting = false;
                 });
             },
             resetForm() {
@@ -133,43 +148,55 @@
                     image: null,
                 };
                 this.errors = {};
+                this.previewImage = null;
             },
 
             deleteProduct(id) {
-                fetch(`/admin/products/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                })
-                .then(res => {
-                    if (res.status === 200) {
-                        this.openDeleteModal = false;
-                        this.fetchProducts(); // Recharge la liste
+                this.deletingProductId = id; // Active l'effet fade-out
+                setTimeout(() => {
+                    fetch(`/admin/products/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    })
+                    .then(res => {
+                        if (res.status === 200) {
+                            this.openDeleteModal = false;
+                            this.fetchProducts();
+                            Toastify({
+                                text: "Produit supprimé avec succès",
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#7a6b5f"
+                            }).showToast();
+                        } else {
+                            return res.text().then(txt => {
+                                throw new Error(txt);
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err.message);
                         Toastify({
-                            text: "Produit supprimé avec succès",
+                            text: "Erreur lors de la suppression du produit",
                             duration: 3000,
                             gravity: "top",
                             position: "right",
-                            backgroundColor: "#7a6b5f"
+                            backgroundColor: "#e63946"
                         }).showToast();
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    Toastify({
-                        text: "Erreur lors de la suppression du produit",
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#e63946"
-                    }).showToast();
-                });
-            },
+                    })
+                    .finally(() => {
+                        this.deletingProductId = null; // Réinitialise l'effet fade-out
+                    });
+                }, 500);
+            }, 
             openEditForm(product) {
                 this.newProduct = { ...product, 
-                    image: `/storage/${product.image}`, // convertir en URL exploitable
+                    image: product.image_url, // convertir en URL exploitable
                  };
+                 
                 this.openProductForm = true;
             },
         }
@@ -182,7 +209,8 @@
       @open-product-form.window="openProductForm = true"
       @close-product-form.window="openProductForm = false"
       @open-delete-modal.window="openDeleteModal = true"
-      @close-delete-modal.window="openDeleteModal = false">
+      @close-delete-modal.window="openDeleteModal = false"
+      >
       
     <header class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold text-[#7a6b5f]">Tableau de Bord</h2>
@@ -241,6 +269,10 @@
                 </select>
             </div>
 
+            <div x-show="loading" class="text-center py-4 text-[#7a6b5f] font-semibold">
+                Chargement des produits...
+            </div>
+
             <table class="min-w-full table-auto text-sm text-left text-gray-700">
                 <thead class="bg-gray-100 text-xs uppercase">
                     <tr>
@@ -255,7 +287,9 @@
                 </thead>
                 <tbody >
                     <template x-for="product in products" :key="product.id">
-                        <tr class="border-b hover:bg-gray-50">
+                    <tr class="border-b hover:bg-gray-50 transition-all duration-300"
+                        :class="deletingProductId === product.id ? 'fade-out' : ''"
+                    >
                             <td class="px-6 py-4" x-text="`PRD-${product.id.toString().padStart(4, '0')}`"></td>
                             <td class="px-6 py-4" x-text="product.name"></td>
                             <!-- <td class="px-6 py-4" x-text="product.category?.name"></td> -->
@@ -265,7 +299,7 @@
                             <td class="px-6 py-4" x-text="product.stock"></td>
                             <td class="px-6 py-4">
                             <!-- <img :src="`/storage/products/${product.image}`" class="w-10 h-10 rounded-full" /> -->
-                            <img :src="`/storage/${product.image}`" alt="Image produit" class="w-10 h-10 rounded-full" />
+                            <img :src="product.image_url" alt="Image produit" class="w-10 h-10 rounded-full" />
 
                             <!-- <template x-if="newProduct.image_url">
                                 <img 
@@ -402,25 +436,56 @@
                         <div class="mb-2">
                             <label class="block mb-1">Photo</label>
                             <!-- Aperçu de l'image actuelle (en édition) -->
-                            <template x-if="newProduct.image && typeof newProduct.image === 'string'">
-                                    <img :src="newProduct.image" alt="Image actuelle" class="w-32 h-32 object-cover rounded border mb-2" />
+                            <!-- <div class="mb-2"> -->
+                            <!-- <label class="block mb-1">Image</label> -->
+                            <div class="flex items-center">
+                                <template x-if="typeof newProduct.image === 'string'">
+                                    <img :src="newProduct.image" class="w-16 h-16 rounded" />
+                                </template>
+                                <template x-if="typeof newProduct.image !== 'string' && newProduct.image">
+                                    <img :src="URL.createObjectURL(newProduct.image)" class="w-16 h-16 rounded" />
                                 </template>
 
+                                <input type="file" @change="e => newProduct.image = e.target.files[0]" class="ml-4" />
+                            </div>
+                             <!-- </div> -->
+
+
                             <!-- Input de fichier (nouvelle image) -->
-                            <input type="file" @change="e => {
+                            <!-- <input type="file" @change="e => {
                                 const file = e.target.files[0];
                                 if (file) {
                                     newProduct.image = file;
                                 }
                             }" class="w-full border rounded px-3 py-2" />
-                                    <span x-text="errors.image" class="text-red-600 text-sm"></span>
+                            <img :src="previewImage" alt="Aperçu de l'image" class="h-32 rounded border shadow object-contain" /> -->
+                            
+                            <!-- <input type="file"
+                                @change="
+                                    newProduct.image = $event.target.files[0];
+                                    if (newProduct.image) {
+                                        previewImage = URL.createObjectURL(newProduct.image);
+                                    }
+                                "
+                                class="w-full border rounded px-3 py-2"
+                            /> -->
+
+                            <span x-text="errors.image" class="text-red-600 text-sm"></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex justify-end gap-3">
                     <button type="button" @click="openProductForm = false" class="text-gray-600 hover:underline">Annuler</button>
-                    <button type="submit" class="bg-[#7a6b5f] text-white px-4 py-2 rounded hover:bg-[#5e5148] transition" x-text="newProduct.id ? 'Modifier' : 'Ajouter'"></button>
+                    
+                    <button type="submit" 
+                        class="bg-[#7a6b5f] text-white px-4 py-2 rounded hover:bg-[#5e5148] transition"
+                        :disabled="submitting"
+                    >
+                        <span x-show="!submitting" x-text="newProduct.id ? 'Modifier' : 'Ajouter'"></span>
+                        <span x-show="submitting">Veuillez patienter...</span>
+                    </button>
+
                 </div>
             </form>
         </div>
@@ -437,10 +502,13 @@
             <p class="mb-4">Êtes-vous sûr de vouloir supprimer ce produit ?</p>
             <div class="flex justify-end gap-3">
                 <button @click="openDeleteModal = false" class="text-gray-600 hover:underline">Annuler</button>
-                <button @click="openDeleteModal = true; selectedProduct = product"  class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
+                <button
+                    @click="deleteProduct(selectedProduct.id)"
+                    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                >
                     Supprimer
                 </button>
-               
+    
             </div>
         </div>
     </div>

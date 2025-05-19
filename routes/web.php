@@ -51,7 +51,7 @@ Route::controller(ProductController::class)->group(function () {
   Route::put('/admin/products/{product}','update')->name('products.update');
   Route::get('/products/create','create')->name('products.create');
   Route::get('/products/edit/{product}','edit')->name('products.edit');
-  Route::delete('/products/{product}','destroy')->name('products.destroy');
+  Route::delete('/admin/products/{product}','destroy')->name('products.destroy');
   Route::get('/products/{product}','show')->name('products.show');
 
   Route::get('/admin/products','index')->name('admin.products.index');
