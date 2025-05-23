@@ -41,7 +41,8 @@ class FrontEndController extends Controller
    
     public function categories()
     {
-        return view('categories');
+        $categories = Category::all();
+        return view('categories.index', compact('categories'));
     }
 
     public function fetch(Request $request)

@@ -60,13 +60,21 @@ Route::controller(ProductController::class)->group(function () {
 });
 // Category routes
 Route::controller(CategoryController::class)->group(function () {
-  Route::get('/categories','index')->name('categories.index');
-  Route::post('/categories','store')->name('categories.store');
-  Route::put('/categories/{category}','update')->name('categories.update');
-  Route::delete('/categories/{category}','destroy')->name('categories.destroy');
-  Route::get('/admin/categories','index')->name('admin.categories.index');
+  Route::get('/admin/categories','index')->name('categories.index');
+  Route::get('/admin/categories/create','create')->name('categories.create');
+  Route::post('/admin/categories','store')->name('categories.store');
+  Route::match(['put', 'patch'], '/admin/categories/{category}','update')->name('categories.update');
+
+  Route::delete('/admin/categories/{category}','destroy')->name('categories.destroy');
   Route::get('/categories/{slug}','show')->name('categories.show');
   Route::get('/admin/categories/json', 'json')->name('admin.categories.json');
+});
+//Order routes
+Route::controller(OrderController::class)->group(function () {
+  Route::get('/admin/orders','index')->name('orders.index');
+  Route::get('/admin/orders/{order}','show')->name('orders.show');
+  Route::put('/admin/orders/{order}','update')->name('orders.update');
+  Route::delete('/admin/orders/{order}','destroy')->name('orders.destroy');
 });
 // Cart routes
 Route::controller(CartController::class)->group(function () {

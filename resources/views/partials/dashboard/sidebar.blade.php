@@ -10,12 +10,12 @@
           ><i class="fas fa-box mr-2"></i>Produits</a
         >
         <a
-          href="./gestion-des-categories.html"
+          href="{{route('categories.create')}}"
           class="block hover:text-[#7a6b5f]"
           ><i class="fas fa-list mr-2"></i> Catégories</a
         >
         <a
-          href="./gestion-des-commandes.html"
+          href="{{route('orders.index')}}"
           class="block hover:text-[#7a6b5f]"
           ><i class="fas fa-truck mr-2"></i>Commandes</a
         >
