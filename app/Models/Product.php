@@ -2,8 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Order;
+use App\Models\CartItem;
+use App\Models\SkinType;
+use App\Models\OrderItem;
+use App\Models\Ingredient;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Product extends Model
 {
@@ -37,4 +42,26 @@ class Product extends Model
         return $this->image ? asset('storage/' . $this->image) : null;
     }
 
+    public function skinTypes()
+    {
+        return $this->belongsToMany(SkinType::class);
+    }
+
+    public function ingredients()
+    {
+        return $this->belongsToMany(Ingredient::class);
+    }
+
+    public function cartItems()
+    {
+        return $this->hasMany(CartItem::class);
+    }
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+    public function orders()
+    {
+        return $this->belongsToMany(Order::class, 'order_items')->withPivot('quantity', 'price', 'status');
+    }
 }

@@ -38,12 +38,14 @@
     </div>
   
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Boucle pour afficher les catégories -->
+    {{-- {{ dd($categories) }}  --}}
     @foreach ($categories as $category)
       <!-- Carte Catégorie -->
       <a href="{{route('categories.show', ['slug' => $category->slug])}}">
         <div class="bg-white shadow-md rounded overflow-hidden">
           <img
-           src="{{ asset('storage/products/' . $category->image) }}"
+           src="{{ asset('storage/' . $category->image) }}"
             alt="soin-du-corps"
             class="w-full h-[200px] object-cover"
           />
@@ -78,32 +80,31 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       @foreach ($featuredProducts as $product)
-        <div class="bg-white shadow-md rounded overflow-hidden p-4 transition duration-300 transform hover:scale-105">
-          <!-- <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->name }}"
-               class="w-full h-[200px] object-cover mb-4" /> -->
-      @if ($product->image)
-          <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-60 object-cover rounded-md mb-4" />
-      @else
-          <img src="https://via.placeholder.com/300x300?text=No+Image" alt="Pas d'image" class="w-full h-60 object-cover rounded-md mb-4" />
-      @endif
+        <div x-data="productCard({{ $product->id }}, '{{ $product->name }}', {{ $product->price }}, '{{ $product->image ? asset('storage/' . $product->image) : 'https://via.placeholder.com/300x300?text=No+Image' }}')"
+            class="bg-white shadow-md rounded-2xl overflow-hidden p-4 transition duration-300 transform hover:scale-105">
 
-          <h4 class="font-bold mb-2">{{ $product->name }}</h4>
-          <p>{{ number_format($product->price, 2, ',', ' ') }} €</p>
+          <img :src="image" :alt="name"
+              class="w-full h-60 object-cover rounded-xl mb-4" />
 
-          <!-- étoiles statiques ici ou dynamiques si vous avez une logique -->
-          <div class="flex mb-4">
-            @for ($i = 1; $i <= 5; $i++)
-              <span class="{{ $i <= 4 ? 'text-yellow-400' : 'text-gray-400' }}">&#9733;</span>
-            @endfor
-          </div>
+          @if ($product->category)
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{ $product->category->name }}</p>
+          @endif
 
-          <div class="flex justify-between items-center transition duration-300">
-            <button class="bg-[#493f35] text-white py-2 px-4 rounded-lg hover:bg-[#655b51]">
+          <h4 class="text-lg font-serif font-semibold text-gray-900 mb-1" x-text="name"></h4>
+          <p class="text-gray-800 font-semibold mb-2" x-text="formattedPrice"></p>
+
+          <div class="text-green-600 text-sm font-medium mb-1" x-show="successMessage" x-text="successMessage"></div>
+
+          <div class="flex justify-between items-center gap-2">
+            <button @click="addToCart" :disabled="loading"
+                    class="bg-[#493f35] text-white py-2 px-4 rounded-lg hover:bg-[#655b51] transition disabled:opacity-50">
               <i class="fas fa-shopping-cart" title="Ajouter au panier"></i>
             </button>
-            <button class="bg-[#493f35] text-white py-2 px-4 rounded-lg hover:bg-[#655b51]">
-              <i class="fas fa-heart" title="Ajouter à la liste de souhaits"></i>
-            </button>
+
+            <a href="{{ route('products.show', $product->slug) }}"
+              class="bg-[#493f35] text-white py-2 px-4 rounded-lg hover:bg-[#655b51] transition">
+              <i class="fas fa-eye" title="Voir le produit"></i>
+            </a>
           </div>
         </div>
       @endforeach
@@ -207,4 +208,73 @@
     </div>
   </div>
 </section>
+
+<script>
+  function productCard(id, name, price, image) {
+    return {
+      id,
+      name,
+      price,
+      image,
+      wishlist: false,
+      loading: false,
+      successMessage: '',
+
+      get formattedPrice() {
+        return new Intl.NumberFormat('fr-CI', {
+          style: 'currency',
+          currency: 'XOF'
+        }).format(this.price);
+      },
+
+      async addToCart() {
+        this.loading = true;
+        this.successMessage = '';
+
+        try {
+          const res = await fetch(`/cart`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ product_id: this.id })
+          });
+
+          if (res.ok) {
+            this.successMessage = 'Ajouté au panier !';
+            setTimeout(() => this.successMessage = '', 2000);
+          } else {
+            this.successMessage = 'Erreur lors de l’ajout.';
+          }
+        } catch (e) {
+          console.error(e);
+          this.successMessage = 'Erreur de réseau.';
+        } finally {
+          this.loading = false;
+        }
+      },
+
+      toggleWishlist() {
+        this.wishlist = !this.wishlist;
+        let list = JSON.parse(localStorage.getItem('wishlist') || '[]');
+
+        if (this.wishlist) {
+          list.push(this.id);
+        } else {
+          list = list.filter(pid => pid !== this.id);
+        }
+
+        localStorage.setItem('wishlist', JSON.stringify(list));
+      },
+
+      loadWishlist() {
+        const list = JSON.parse(localStorage.getItem('wishlist') || '[]');
+        this.wishlist = list.includes(this.id);
+      }
+        
+    }
+  }
+</script>
+
 @endsection

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Ingredient;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -21,20 +22,22 @@ class ProductController extends Controller
     }
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             // 'slug' => 'required|string|max:255|unique:products,slug',
-            'category_id' => 'required|integer',
+            'category_id' => 'required|integer|exists:categories,id', // Assuming categories is a table with id
             'description' => 'required|string',
+            'skin_type_ids' => 'array',
+            'skin_type_ids.*' => 'exists:skin_types,id', // Assuming skin_types is a table with id
+            'ingredient_ids' => 'array',
+            'ingredient_ids.*' => 'exists:ingredients,id', // Assuming ingredients is a table with id
             'price' => 'required|numeric',
             'stock' => 'required|integer',
-            'featured' => 'boolean',
-            'bestseller' => 'boolean',
-            'popular' => 'boolean',
-            'skin_type' => 'required|string',
+            'featured' => 'boolean|sometimes',
+            'bestseller' => 'boolean|sometimes',
+            'popular' => 'boolean|sometimes',
             // 'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-
         ]);
 
         // $imagePath = $request->file('image')->store('products', 'public');
@@ -43,26 +46,33 @@ class ProductController extends Controller
                      : null;
 
         $product = Product::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'featured' => $request->boolean('featured'),
-            'bestseller' => $request->boolean('bestseller'),
-            'popular' => $request->boolean('popular'),
-            'category_id' => $request->category_id,
-            'description' => $request->description,
-            'price' => $request->price,
-            'stock' => $request->stock,
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'category_id' => $validated['category_id'],
+            'description' => $validated['description'],
+            'price' => $validated['price'],
+            'stock' => $validated['stock'],
+            'featured' => $validated['featured'] ?? false,
+            'bestseller' => $validated['bestseller'] ?? false,
+            'popular' => $validated['popular'] ?? false,
+            // 'skin_type_' => $validated['skin_type'],
             'image' => $imagePath,
-            'skin_type' => $request->skin_type,
         ]);
 
-        return response()->json(['message' => 'Produit enregistré', 'product' => $product]);
-        // return redirect()->route('products.index');
+        // Attacher les types de peau et les ingrédients au produit
+        $product->skinTypes()->sync($validated['skin_type_ids'] ?? []);
+        $product->ingredients()->sync($validated['ingredient_ids'] ?? []);
+        
+        // Retourner une réponse JSON ou rediriger vers une autre page
+        return response()->json([
+            'message' => 'Produit enregistré',
+            'product' => $product->load('skinTypes', 'ingredients', 'category')
+        ]);
     }
     public function update(Request $request,  $id)
     {
         // Valider les données du formulaire
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|integer',
             'description' => 'required|string',
@@ -71,8 +81,11 @@ class ProductController extends Controller
             'featured' => 'boolean',
             'bestseller' => 'boolean',
             'popular' => 'boolean',
-            'skin_type' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'skin_type_ids' => 'array',
+            'skin_type_ids.*' => 'exists:skin_types,id', // Assuming skin_types is a table with id
+            'ingredient_ids' => 'array',
+            'ingredient_ids.*' => 'exists:ingredients,id', // Assuming ingredients is a table with id
         ]);
 
         // Mettre à jour le produit
@@ -86,26 +99,33 @@ class ProductController extends Controller
             }
         
             // Stocker la nouvelle image
-            $imagePath = $request->file('image')->store('products', 'public');
-            $product->image = $imagePath;
+            $product->image = $request->file('image')->store('products', 'public');
         }
         // Mettre à jour les autres champs
         $product->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'category_id' => $request->category_id,
-            'description' => $request->description,
-            'price' => $request->price,
-            'stock' => $request->stock,
-            'featured' => $request->boolean('featured'),
-            'bestseller' => $request->boolean('bestseller'),
-            'popular' => $request->boolean('popular'),
-            'skin_type' => $request->skin_type,
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'category_id' => $validated['category_id'],
+            'description' => $validated['description'],
+            'price' => $validated['price'],
+            'stock' => $validated['stock'],
+            'featured' => $validated['featured'] ?? false,
+            'bestseller' => $validated['bestseller'] ?? false,
+            'popular' => $validated['popular'] ?? false,
+            'image' => $product->image, // Utiliser l'image mise à jour ou l'ancienne
         ]);
 
+        // Attacher les types de peau et les ingrédients au produit
+        $product->skinTypes()->sync($validated['skin_type_ids'] ?? []);
+        $product->ingredients()->sync($validated['ingredient_ids'] ?? []);
+
+        // Rafraîchir le produit pour obtenir les données mises à jour
         $product->refresh(); 
         
-        return response()->json(['message' => 'Produit mis à jour', 'product' => $product]);
+        return response()->json([
+            'message' => 'Produit mis à jour',
+            'product' => $product->load('skinTypes', 'ingredients', 'category')
+        ]);
     }
     public function destroy($id)
     {
@@ -115,12 +135,30 @@ class ProductController extends Controller
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
+        //Supprimer les relations many-to-many entre le produit et les types de peau et les ingrédients
+        $product->skinTypes()->detach();
+        $product->ingredients()->detach();
+        // Supprimer le produit
         $product->delete();
         return response()->json(['message' => 'Produit supprimé avec succès.']);
     }
-    public function show(Product $product)
+    public function show($slug)
     {
-        return view('products.show', compact('product'));
+        // Trouver le produit par son slug
+        $product = Product::where('slug', $slug)->firstOrFail();
+        // -- Get similar products based on category --
+        $category = $product->category;
+        // Récupérer les ingrédients associés au produit limité à 3
+        $ingredients = $product->ingredients()->take(3)->get();
+        // Récupérer les types de peau associés au produit limité à 5
+        $skinTypes = $product->skinTypes()->take(5)->get();
+        // Récupérer les produits similaires dans la même catégorie, en excluant le produit actuel
+        // Limiter à 4 produits similaires
+        $similarProducts = Product::where('category_id', $category->id)
+            ->where('id', '!=', $product->id)
+            ->take(4)
+            ->get();
+        return view('products.show', compact('product', 'similarProducts', 'ingredients', 'skinTypes'));
     }
     public function edit(Product $product)
     {
@@ -134,8 +172,11 @@ class ProductController extends Controller
         $products = Product::orderBy('created_at', 'desc')
             ->orderBy('updated_at', 'desc')
             ->paginate(9);
-        // Passer les catégories à la vue
-        return view('products.create', compact('categories', 'products'));
+        // Récupérer tous les ingrédients pour le formulaire de création de produit
+        $ingredients = Ingredient::with('skinTypes')->get();
+    
+        // Passer les catégories, les produits et les ingrédients à la vue
+        return view('products.create', compact('categories', 'products', 'ingredients'));
     }
     public function search(Request $request)
     {
@@ -176,7 +217,7 @@ class ProductController extends Controller
     {
         // $products = Product::with('category')->paginate(3);
         // $query = Product::with('category');
-        $query = Product::with('category')
+        $query = Product::with(['category', 'skinTypes', 'ingredients'])
         ->orderBy('created_at', 'desc')
         ->orderBy('updated_at', 'desc');
 

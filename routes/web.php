@@ -3,11 +3,15 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FrontEndController;
+use App\Http\Controllers\SkinTypeController;
+use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\IngredientController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,6 +48,8 @@ Route::controller(FrontEndController::class)->group(function () {
   Route::get('/categories', 'categories')->name('categories');
   Route::get('/products/fetch', 'fetch')->name('products.fetch');
   Route::get('/products/search', 'fetch')->name('products.search');
+  Route::get('/cart', 'cart')->name('cart');
+
 });
 // Product routes
 Route::controller(ProductController::class)->group(function () {
@@ -69,19 +75,53 @@ Route::controller(CategoryController::class)->group(function () {
   Route::get('/categories/{slug}','show')->name('categories.show');
   Route::get('/admin/categories/json', 'json')->name('admin.categories.json');
 });
+
+// Ingredient routes
+Route::controller(IngredientController::class)->group(function () {
+  Route::get('/admin/ingredients', 'index')->name('ingredients.index');
+  Route::get('/admin/ingredients/create', 'create')->name('ingredients.create');
+  Route::post('/admin/ingredients', 'store')->name('ingredients.store');
+  Route::put('/admin/ingredients/{ingredient}', 'update')->name('ingredients.update');
+  Route::delete('/admin/ingredients/{ingredient}', 'destroy')->name('ingredients.destroy');
+  Route::get('/admin/ingredients/json', 'json')->name('admin.ingredients.json');
+});
+
+//SkinType routes
+Route::controller(SkinTypeController::class)->group(function () {
+  Route::get('/admin/skintypes', 'index')->name('skintypes.index');
+  Route::get('/admin/skintypes/create', 'create')->name('skintypes.create');
+  Route::post('/admin/skintypes', 'store')->name('skintypes.store');
+  Route::put('/admin/skintypes/{skintype}', 'update')->name('skintypes.update');
+  Route::delete('/admin/skintypes/{skintype}', 'destroy')->name('skintypes.destroy');
+  Route::get('/admin/skintypes/json', 'json')->name('admin.skintypes.json');
+});
+
 //Order routes
-Route::controller(OrderController::class)->group(function () {
-  Route::get('/admin/orders','index')->name('orders.index');
-  Route::get('/admin/orders/{order}','show')->name('orders.show');
-  Route::put('/admin/orders/{order}','update')->name('orders.update');
-  Route::delete('/admin/orders/{order}','destroy')->name('orders.destroy');
+Route::middleware('auth')->group(function () {
+  Route::controller(OrderController::class)->group(function () {
+    Route::get('/admin/orders','index')->name('orders.index');
+    Route::get('/admin/orders/create','create')->name('orders.create');
+    Route::get('/admin/orders/{order}','show')->name('orders.show');
+    Route::put('/admin/orders/{order}','update')->name('orders.update');
+    Route::delete('/admin/orders/{order}','destroy')->name('orders.destroy');
+    Route::get('/admin/suivi-commandes', 'suivi')->name('suivi.index');
+  });
 });
+
 // Cart routes
-Route::controller(CartController::class)->group(function () {
-  Route::get('/cart', 'index')->name('cart.index');
-  Route::post('/cart', 'store')->name('cart.store');
-  Route::delete('/cart/{product}', 'destroy')->name('cart.destroy');
+Route::middleware('auth')->group(function () {
+    Route::controller(CartController::class)->group(function () {
+    Route::get('/cart/items', 'index')->name('cart.index');
+    Route::post('/cart', 'store')->name('cart.store');
+    Route::delete('/cart/remove/{item}', 'remove')->name('cart.remove');
+    Route::post('/cart/clear', 'clear')->name('cart.clear');
+    Route::post('/cart/checkout', 'checkout')->name('cart.checkout');
+    Route::put('/cart/update/{item}', 'update')->name('cart.update');
+  });
 });
+// Route::get('/cart', fn () => view('cart.index'))->name('cart.index');
+
+Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
 
 Route::controller(CheckoutController::class)->group(function () {
   Route::get('/checkout', 'index')->name('checkout.index');
@@ -91,6 +131,8 @@ Route::controller(CheckoutController::class)->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
   Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
 });
+
+
 
 // Route::middleware(['auth', 'verified'])->group(function () {
 //   Route::get('/dashboard', function () {

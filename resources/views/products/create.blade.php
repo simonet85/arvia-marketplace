@@ -7,6 +7,8 @@
         return {
             products: [],
             categories: [],
+            ingredients: [],
+            skinTypes: [],
             currentPage: 1,
             totalPages: 1,
             search: '',
@@ -24,7 +26,8 @@
                 id: null,
                 name: '',
                 description: '',
-                skin_type: '',
+                skin_type_ids: [],
+                ingredient_ids: [],
                 bestseller: false,
                 popular: false,
                 featured: false,
@@ -66,12 +69,29 @@
                         this.categories = data;
                     });
             },
+            //fetch ingredients
+            fetchIngredients() {
+                fetch('/admin/ingredients/json')
+                    .then(res => res.json())
+                    .then(data => {
+                        this.ingredients = data;
+                        console.log('Ingredients fetched:', this.ingredients); // ✅ LOG INGREDIENTS
+                    });
+            },
+            fetchSkinTypes() {
+                fetch('/admin/skintypes/json')
+                    .then(res => res.json())
+                    .then(data => {
+                        this.skinTypes = data;
+                        console.log('Skin Types fetched:', this.skinTypes); // ✅ LOG SKIN TYPES
+                    });
+            },
             submitForm() {
                 this.submitting = true;
                 const formData = new FormData();
                 formData.append('name', this.newProduct.name);
-                formData.append('description', this.newProduct.description);
-                formData.append('skin_type', this.newProduct.skin_type);
+                formData.append('description', this.newProduct.description = window.editor.getContent());
+                // formData.append('skin_type', this.newProduct.skin_type);
                 formData.append('bestseller', this.newProduct.bestseller ? 1 : 0);
                 formData.append('popular', this.newProduct.popular ? 1 : 0);
                 formData.append('featured', this.newProduct.featured ? 1 : 0);
@@ -79,9 +99,22 @@
                 formData.append('price', this.newProduct.price);
                 formData.append('stock', this.newProduct.stock);
 
+                this.newProduct.ingredient_ids.forEach((ingredient, index) => {
+                    formData.append(`ingredient_ids[${index}]`, ingredient);
+                });
+
+                this.newProduct.skin_type_ids.forEach((skinType, index) => {
+                    formData.append(`skin_type_ids[${index}]`, skinType);
+                });
+
                 if (this.newProduct.image instanceof File) {
                     formData.append('image', this.newProduct.image);
                 }
+
+                //console.log('Submitting product:', this.newProduct); // ✅ LOG PRODUCT DETAILS
+                //console.log('Form Data:', formData); // ✅ LOG FORM DATA
+
+                // return;
 
                 const isEdit = !!this.newProduct.id;
                 const url = isEdit ? `/admin/products/${this.newProduct.id}` : '/admin/products';
@@ -101,10 +134,24 @@
                     body: formData
                 })
                 .then(res => {
-                    if (res.status === 422) return res.json().then(data => { this.errors = data.errors });
+                    console.log('Response status:', res.status); // ✅ LOG RESPONSE STATUS
+                    if (res.status === 422) {
+                        return res.json().then(data => {
+                            this.errors = data.errors || {};
+                            console.log('Validation errors:', this.errors); // ✅ LOG VALIDATION ERRORS
+                            Toastify({
+                                text: "Veuillez corriger les erreurs dans le formulaire",
+                                duration: 4000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#e63946"
+                            }).showToast();
+                        });
+                    } 
                     return res.json();
                 })
                 .then(data => {
+                    if (!data || !data.product) return ;
                     console.log('Product response:', data); // ✅ LOG RESPONSE HERE
                     if (data.product && data.product.image_url) {
                         console.log('Product:', data.product); // ✅ CHECK IMAGE
@@ -117,18 +164,11 @@
                         duration: 3000,
                         gravity: "top",
                         position: "right",
-                        backgroundColor: "#7a6b5f"
+                        backgroundColor: "#7a6b5f" 
                     }).showToast();
                 })
                 .catch(err => {
                     console.error(err.message);
-                    // Toastify({
-                    //     text: "Erreur lors de l'ajout du produit",
-                    //     duration: 3000,
-                    //     gravity: "top",
-                    //     position: "right",
-                    //     backgroundColor: "#e63946"
-                    // }).showToast();
                 })    
                 .finally(() => {
                     this.submitting = false;
@@ -138,7 +178,8 @@
                 this.newProduct = {
                     name: '',
                     description: '',
-                    skin_type: '',
+                    skin_type_ids: [],
+                    ingredient_ids: [],
                     bestseller: false,
                     popular: false,
                     featured: false,
@@ -147,8 +188,26 @@
                     stock: '',
                     image: null,
                 };
-                this.errors = {};
+                this.errors = {
+                    name: '',
+                    description: '',
+                    skin_type_ids: [],
+                    ingredient_ids: [],
+                    bestseller: '',
+                    popular: '',
+                    featured: '',
+                    category_id: '',
+                    price: '',
+                    stock: '',
+                    image: '',
+                };
                 this.previewImage = null;
+
+                //Réinitialise l'input de l'image
+                const fileInput = document.querySelector('input[type="file"]');
+                if (fileInput) {
+                    fileInput.value = ''; // Réinitialise l'input de fichier
+                }
             },
 
             deleteProduct(id) {
@@ -193,10 +252,32 @@
                 }, 500);
             }, 
             openEditForm(product) {
-                this.newProduct = { ...product, 
-                    image: product.image_url, // convertir en URL exploitable
+                console.log('Editing product:', product); // ✅ LOG PRODUCT DETAILS
+                this.newProduct = { 
+                    id: product.id,
+                    name: product.name,
+                    description: product.description,
+                    skin_type_ids: Array.isArray(product.skin_types) ? product.skin_types.map(skinType => skinType.id) : [], // Assurez-vous que c'est un tableau
+                    ingredient_ids: Array.isArray(product.ingredients) ? product.ingredients.map(ing => ing.id) : [], // Assurez-vous que c'est un tableau d'IDs
+                    bestseller: product.bestseller,
+                    popular: product.popular,
+                    featured: product.featured,
+                    category_id: product.category_id,
+                    price: product.price,
+                    stock: product.stock,  
+                    //ingredients: product.ingredients.map(ing => ing.id) || [], // Assurez-vous que c'est un tableau d'IDs 
+                    image: null,
+                    image_url: product.image_url ?? null, // convertir en URL exploitable
                  };
-                 
+
+                 // Attendre que le modal soit affiché avant de mettre à jour l'aperçu de l'image
+                this.previewImage = product.image_url ? product.image_url : null; // Mettre à jour l'aperçu de l'image
+
+                // 👇 Attendre que le modal soit visible, puis injecter la description
+                setTimeout(() => {
+                    window.editor.setContent(product.description);
+                }, 100);
+
                 this.openProductForm = true;
             },
         }
@@ -205,7 +286,7 @@
 
 <main class="flex-1 overflow-y-auto p-6"
       x-data="productTable()"
-      x-init="fetchProducts(); fetchCategories()"
+      x-init="fetchProducts(); fetchCategories(); fetchIngredients(); fetchSkinTypes();"
       @open-product-form.window="openProductForm = true"
       @close-product-form.window="openProductForm = false"
       @open-delete-modal.window="openDeleteModal = true"
@@ -300,20 +381,6 @@
                             <td class="px-6 py-4">
                             <!-- <img :src="`/storage/products/${product.image}`" class="w-10 h-10 rounded-full" /> -->
                             <img :src="product.image_url" alt="Image produit" class="w-10 h-10 rounded-full" />
-
-                            <!-- <template x-if="newProduct.image_url">
-                                <img 
-                                    :src="newProduct.image_url" 
-                                   class="w-10 h-10 rounded-full"
-                                />
-                            </template>
-                            <template x-if="!newProduct.image_url">
-                                <img 
-                                    :src="`/storage/products/${product.image}`" 
-                                   class="w-10 h-10 rounded-full"
-                                />
-                            </template> -->
-
                             </td>
                             <td class="px-6 py-4 flex gap-2">
                                 <button @click="openEditForm(product)" class="text-blue-600 hover:underline">Modifier</button>
@@ -364,111 +431,149 @@
         x-transition.opacity
         style="display: none;"
     >
-        <div class="bg-white px-6 py-4 rounded-lg w-full max-w-2xl shadow-lg">
+        <div class="bg-white px-6 py-4 rounded-lg w-full max-w-7xl shadow-lg">
             <h3 class="text-xl font-semibold mb-4" x-text="newProduct.id ? 'Modifier le produit' : 'Ajouter un produit'"></h3>
             <form @submit.prevent="submitForm" enctype="multipart/form-data">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <div class="mb-2">
-                            <label class="block mb-1">Nom du produit</label>
-                            <input type="text" x-model="newProduct.name" class="w-full border rounded px-3 py-2" />
+                        <div class="flex justify-between">
+                            <div class="mb-2">
+                                <label class="block mb-1 font-bold">Nom du produit</label>
+                                <input type="text" placeholder="Nom du produit" x-model="newProduct.name" class="w-full border rounded px-3 py-2" />
+                                <div class="mt-1">
+                                    <span x-text="errors.name" class="text-red-600 text-sm"></span>
+                                </div>
+                            </div>
+    
+                            <div class="mb-2">
+                                <label class="block mb-1 font-bold">Catégorie</label>
+                                <select x-model="newProduct.category_id" class="w-full border rounded px-3 py-2">
+                                    <option value="">-- Choisir une catégorie --</option>
+                                    <template x-for="cat in categories" :key="cat.id">
+                                        <option :value="cat.id" x-text="cat.name"></option>
+                                    </template>
+                                </select>
+                                <div class="mt-1">
+                                    <span x-text="errors.category_id" class="text-red-600 text-sm"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between">
+                            <div class="mb-2">
+                                <label class="block mb-1 font-bold">Prix (CFA)</label>
+                                <input type="number" placeholder="Prix du produit" x-model="newProduct.price" step="0.01" class="w-full border rounded px-3 py-2" />
+                                    <div class="mt-1">
+                                        <span x-text="errors.price" class="text-red-600 text-sm"></span>
+                                    </div>
+                            </div>
+                           
+                            <div class="mb-2">
+                                <label class="block mb-1 font-bold">Quantité</label>
+                                <input type="number" placeholder="Quantité du produit" x-model="newProduct.stock" class="w-full border rounded px-3 py-2" />
+                                <div class="mt-1">
+                                    <span x-text="errors.stock" class="text-red-600 text-sm"></span>
+                                </div>
+                            </div>
                         </div>
                         <!-- Description -->
                         <div class="mb-2">
-                            <label class="block mb-1">Description</label>
+                            <label class="block mb-1 font-bold">Description</label>
                             <textarea rows="8" x-model="newProduct.description" class="w-full border p-2 rounded mt-2" placeholder="Description du produit"></textarea>
-                            <span x-text="errors.description" class="text-red-600 text-sm"></span>
-                        </div>
-
-                        <div class="mb-2">
-                            <label class="block mb-1">Catégorie</label>
-                            <select x-model="newProduct.category_id" class="w-full border rounded px-3 py-2">
-                                <option value="">-- Choisir une catégorie --</option>
-                                <template x-for="cat in categories" :key="cat.id">
-                                    <option :value="cat.id" x-text="cat.name"></option>
-                                </template>
-                            </select>
-                            <span x-text="errors.category_id" class="text-red-600 text-sm"></span>
+                            <div class="mt-1">
+                                <span x-text="errors.description" class="text-red-600 text-sm"></span>
+                            </div>
                         </div>
                     </div>
                     <div>
                         <!-- skin type -->
                         <div class="mb-2">
-                            <label class="block mb-1">Type de peau</label>
-                            <select x-model="newProduct.skin_type" class="w-full border rounded px-3 py-2">
-                                <option value="">-- Choisir un type de peau --</option>
-                                <option value="sensitive">Peau sensible</option>
-                                <option value="dry">Peau sèche</option>
-                                <option value="oily">Peau grasse</option>
-                                <option value="combination">Peau mixte</option>
-                            </select>
-                            <span x-text="errors.skin_type" class="text-red-600 text-sm"></span>
-                        </div>
+                            <label class="block mb-1 font-bold">Type de peau</label>
+                            <!-- affichez les types de peau -->
+                            <div class="border-2  p-2">
+                                <template x-for="(skinType, index) in skinTypes" :key="skinType.id">
+                                    <label class="inline-flex items-center mr-4">
 
-                        <div class="mb-2">
-                            <label class="block mb-1">Prix (€)</label>
-                            <input type="number" x-model="newProduct.price" step="0.01" class="w-full border rounded px-3 py-2" />
+                                        <input type="checkbox" 
+                                        :value="skinType.id" 
+                                        :checked="newProduct.skin_type_ids.includes(skinType.id)"
+                                        @change="event => {
+                                            if (event.target.checked) {
+                                                newProduct.skin_type_ids.push(skinType.id);
+                                            } else {
+                                                newProduct.skin_type_ids = newProduct.skin_type_ids.filter(id => id !== skinType.id);
+                                            }
+                                        }" 
+                                        class="mr-2 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        >
+                                        <span x-text="skinType.name" class="ml-2"></span>
+                                    </label>
+                                </template>
+                                <span x-text="errors.skinType" class="text-red-600 text-sm"></span>
+                            </div>
                         </div>
-                        <span x-text="errors.price" class="text-red-600 text-sm"></span>
+                        <!--Ingredients -->
                         <div class="mb-2">
-                            <label class="block mb-1">Stock</label>
-                            <input type="number" x-model="newProduct.stock" class="w-full border rounded px-3 py-2" />
+                            <label class="block mb-1 font-bold">Ingrédients</label>
+                            <div class="border-2  p-2">
+                                <template x-for="(ingredient, index) in ingredients.ingredients" :key="ingredient.id">
+                                    <label class="inline-flex items-center mr-4">
+                                        <input type="checkbox" 
+                                            :value="ingredient.id" 
+                                            :checked="newProduct.ingredient_ids.includes(ingredient.id)"
+                                            @change="event => {
+                                                if (event.target.checked) {
+                                                    newProduct.ingredient_ids.push(ingredient.id);
+                                                } else {
+                                                    newProduct.ingredients = newProduct.ingredients.filter(id => id !== ingredient.id);
+                                                }
+                                            }" 
+                                            
+                                            class="mr-2 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        >
+                                        <span x-text="ingredient.name" class="ml-2"></span>
+                                    </label>
+                                </template>
+                                <span x-text="errors.ingredients" class="text-red-600 text-sm"></span>
+                            </div>
                         </div>
-                        <span x-text="errors.stock" class="text-red-600 text-sm"></span>
+          
                         <!-- Checkboxes -->
-                        <div class="flex flex-col space-y-1 mt-4">
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" x-model="newProduct.bestseller" class="mr-2"> Meilleure vente
-                            </label>
-                            <span x-text="errors.bestseller" class="text-red-600 text-sm"></span>
-
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" x-model="newProduct.popular" class="mr-2"> Populaire
-                            </label>
-                            <span x-text="errors.popular" class="text-red-600 text-sm"></span>
-
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" x-model="newProduct.featured" class="mr-2"> À la une
-                            </label>
-                            <span x-text="errors.featured" class="text-red-600 text-sm"></span>
+                        <div class="mt-2">
+                            <!-- title -->
+                            <label class="block mb-1 font-bold">Produits en vedette</label>
+                            <div class="border-2 rounded p-4  space-y-1 ">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" x-model="newProduct.bestseller" class="mr-2"> Meilleure vente
+                                </label>
+                                <span x-text="errors.bestseller" class="text-red-600 text-sm"></span>
+    
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" x-model="newProduct.popular" class="mr-2"> Populaire
+                                </label>
+                                <span x-text="errors.popular" class="text-red-600 text-sm"></span>
+    
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" x-model="newProduct.featured" class="mr-2"> À la une
+                                </label>
+                                <span x-text="errors.featured" class="text-red-600 text-sm"></span>
+                            </div>
                         </div>
                         
                         <div class="mb-2">
-                            <label class="block mb-1">Photo</label>
+                            <label class="block mb-1 font-bold">Photo</label>
                             <!-- Aperçu de l'image actuelle (en édition) -->
                             <!-- <div class="mb-2"> -->
                             <!-- <label class="block mb-1">Image</label> -->
                             <div class="flex items-center">
-                                <template x-if="typeof newProduct.image === 'string'">
-                                    <img :src="newProduct.image" class="w-16 h-16 rounded" />
+                                <input type="file" @change="e => newProduct.image = e.target.files[0]" class="ml-4" />
+
+                                <template x-if="typeof newProduct.image_url === 'string'">
+                                    <img :src="newProduct.image_url" class="w-20 h-20  rounded-md border-gray-50" />
                                 </template>
                                 <template x-if="typeof newProduct.image !== 'string' && newProduct.image">
-                                    <img :src="URL.createObjectURL(newProduct.image)" class="w-16 h-16 rounded" />
+                                    <img :src="URL.createObjectURL(newProduct.image)" class="w-20 h-20 rounded-md border-gray-50" />
                                 </template>
-
-                                <input type="file" @change="e => newProduct.image = e.target.files[0]" class="ml-4" />
                             </div>
-                             <!-- </div> -->
-
-
-                            <!-- Input de fichier (nouvelle image) -->
-                            <!-- <input type="file" @change="e => {
-                                const file = e.target.files[0];
-                                if (file) {
-                                    newProduct.image = file;
-                                }
-                            }" class="w-full border rounded px-3 py-2" />
-                            <img :src="previewImage" alt="Aperçu de l'image" class="h-32 rounded border shadow object-contain" /> -->
-                            
-                            <!-- <input type="file"
-                                @change="
-                                    newProduct.image = $event.target.files[0];
-                                    if (newProduct.image) {
-                                        previewImage = URL.createObjectURL(newProduct.image);
-                                    }
-                                "
-                                class="w-full border rounded px-3 py-2"
-                            /> -->
 
                             <span x-text="errors.image" class="text-red-600 text-sm"></span>
                         </div>

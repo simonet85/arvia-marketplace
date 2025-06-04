@@ -69,15 +69,20 @@ class CategoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Category $category)
+    public function show($slug)
     {
-        // Show the category with its products associated related to it
-        $products = $category->products()->paginate(6);
+        // Find the category by slug
+        $category = Category::where('slug', $slug)->firstOrFail();
         if (!$category) {
-            return redirect()->route('categories.index')->with('error', 'Category not found');
+            return redirect()->route('categories.index')->with('error', 'Aucune catégorie trouvée');
         }
+        
+        // Charger les produits associés à la catégorie
+        $products = $category->products()->latest()->paginate(6);
+       
         return view('categories.show', compact('category', 'products'));
     }
+
 
     /**
      * Show the form for editing the specified resource.

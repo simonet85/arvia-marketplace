@@ -24,7 +24,7 @@
         class="absolute top-12 right-0 w-48 p-2 border rounded-md text-sm transition-all duration-300 shadow-md z-50 bg-white"
       />
 
-      <a href="list-wishlist.html" class="relative hover:text-black transition">
+      <a href="{{route('wishlist.index')}}" class="relative hover:text-black transition">
         <i class="fas fa-heart"></i>
         <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">2</span>
       </a>
@@ -39,9 +39,19 @@
         </a>
       @endauth
 
-      <a href="list-commande.html" class="relative hover:text-black transition">
+      <a href="{{ route('cart') }}" class="relative hover:text-black transition">
         <i class="fas fa-shopping-cart"></i>
-        <span class="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+        @php 
+          $cartCount = \App\Models\CartItem::when(auth()->check(),
+            function ($query) {
+                return $query->where('user_id', auth()->id());
+            },
+            function ($query) {
+                return $query->where('session_id', session()->getId());
+            }
+          )->count();
+        @endphp
+        <span class="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ $cartCount }}</span>
       </a>
 
       <button @click="open = !open" class="md:hidden ml-2">

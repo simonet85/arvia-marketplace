@@ -1,4 +1,4 @@
-<aside x-data="filters()" class="w-full lg:w-1/4 bg-white shadow-md rounded-lg p-6">
+<aside x-data="filters()" class="lg:w-64  bg-white shadow-md rounded-lg p-6">
 
     <h2 class="text-xl font-bold mb-4">Filters</h2>
 
@@ -30,7 +30,7 @@
             <input 
                 type="range" 
                 min="0" 
-                max="500" 
+                max="10000" 
                 step="10"
                 x-model="priceRange"
                 @input="updateFilters"
@@ -38,8 +38,8 @@
             >
         </div>
         <div class="flex justify-between text-sm mt-1">
-            <span>$0</span>
-            <span x-text="'$' + priceRange"></span>
+            <span>1000 CFA</span>
+            <span x-text=" priceRange + ' CFA'"></span>
         </div>
     </div>
 
@@ -108,7 +108,7 @@
 function filters() {
     return {
         selectedCategories: [],
-        priceRange: 500,
+        priceRange: 10000,
         skinType: '',
         bestseller: false,
         populars: false,
@@ -121,7 +121,7 @@ function filters() {
             if (this.selectedCategories.length) {
                 params.append('categories', this.selectedCategories.join(','));
             }
-            if (this.priceRange !== 500) {
+            if (this.priceRange !== 10000) {
                 params.append('price', this.priceRange);
             }
             if (this.skinType) {

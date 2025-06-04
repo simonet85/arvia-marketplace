@@ -17,9 +17,18 @@ class FrontEndController extends Controller
      */
     public function home()
     {
-        $featuredProducts = Product::where('featured', true)->take(4)->get();
+        // $featuredProducts = Product::where('featured', true)->take(4)->get();
+        // Get only the first 4  products
+        $featuredProducts = Product::take(4)->get();
+
         //Get only the first 4 categories
         $categories = Category::take(4)->get();
+
+        // In a controller or middleware
+        $userId = auth()->id();
+        $sessionId = session()->getId();
+        \Log::info("User session log", ['user_id' => $userId, 'session_id' => $sessionId]);
+
 
         return view('welcome', compact('featuredProducts', 'categories'));
     }
@@ -41,7 +50,7 @@ class FrontEndController extends Controller
    
     public function categories()
     {
-        $categories = Category::all();
+        $categories = Category::paginate(8);
         return view('categories.index', compact('categories'));
     }
 
@@ -107,6 +116,9 @@ class FrontEndController extends Controller
         return view('partials.product-grid', compact('products'))->render();
     }
     
+    public function cart(){
+        return view('cart.index');
+    }
     
     
    

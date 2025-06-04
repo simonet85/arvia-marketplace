@@ -7,6 +7,8 @@ use Illuminate\Database\Seeder;
 use Database\Seeders\UserSeeder;
 use Database\Seeders\ProductSeeder;
 use Database\Seeders\CategorySeeder;
+use Database\Seeders\SkinTypeSeeder;
+use Database\Seeders\IngredientSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -26,6 +28,8 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             RoleSeeder::class,
             UserSeeder::class,
+            SkinTypeSeeder::class,
+            IngredientSeeder::class,
         ]);
         
     }

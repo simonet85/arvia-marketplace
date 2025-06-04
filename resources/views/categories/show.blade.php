@@ -1,109 +1,135 @@
 @extends('layouts.app')
+
 @section('content')
-    <div class="max-w-6xl mx-auto px-4 py-10">
-      <!-- Breadcrumb -->
-      <nav class="text-sm text-gray-500 mb-6">
-        <a href="categories.html" class="hover:underline">Catégories</a> /
-        <a href="categorie-soin-du-visage.html" class="hover:underline"
-          >Soin du Visage</a
-        >
-        /
-        <span class="text-gray-700">Crème Hydratante Aloe Vera</span>
-      </nav>
-
-      <!-- Produit -->
-      <div class="grid md:grid-cols-2 gap-10">
-        <!-- Image -->
-        <div>
-          <img
-            src="https://source.unsplash.com/600x600/?cream,skincare"
-            alt="Crème Aloe Vera"
-            class="rounded-2xl shadow-lg object-cover w-full h-auto"
-          />
+<main>
+  {{-- dd($category) --}}
+  {{-- dd($products) --}}
+      <!-- Header -->
+      <header class="bg-[#f9f7f5] py-16">
+        <div class="container mx-auto px-6 md:px-12">
+          <h1 class="text-3xl font-serif text-center mb-6">{{ $category->name }}</h1>
         </div>
-
-        <!-- Détails produit -->
-        <div>
-          <h1 class="text-3xl font-serif mb-2">Crème Hydratante Aloe Vera</h1>
-          <p class="text-gray-500 mb-4">
-            50ml – Pour peaux sensibles et déshydratées
-          </p>
-
-          <div class="text-xl font-semibold text-green-700 mb-4">19,90€</div>
-
-          <p class="text-gray-700 mb-6 leading-relaxed">
-            Cette crème à base d’aloe vera bio hydrate en profondeur, apaise les
-            rougeurs et redonne éclat à votre peau. Enrichie en beurre de karité
-            et vitamine E, elle convient à toutes les peaux même les plus
-            sensibles.
-          </p>
-
-          <ul class="mb-6 text-sm text-gray-600 space-y-2">
-            <li>✔ 98% d’ingrédients d’origine naturelle</li>
-            <li>✔ Non testée sur les animaux</li>
-            <li>✔ Certifiée bio & vegan</li>
-          </ul>
-
-          <button
-            class="bg-gray-800 text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-gray-700 transition"
+      </header>
+      
+      @if ($products->count() === 0)
+        <p class="text-center text-2xl text-gray-600">Aucun produit dans cette catégorie</p>
+      @else
+        <!-- Filtres -->
+        <section class="px-4 md:px-12 py-8 max-w-7xl mx-auto">
+          <div class="flex flex-col sm:flex-row gap-4 mb-6 justify-center">
+            <select
+              id="filterType"
+              class="border border-gray-300 rounded-md p-2 text-sm w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-black"
+            >
+              <option value="">Filtrer par type</option>
+              <option value="shampooing">Shampooing</option>
+              <option value="soin">Soin</option>
+              <option value="masque">Masque</option>
+              <option value="traitement">Traitement</option>
+            </select>
+  
+            <select
+              id="filterIngredient"
+              class="border border-gray-300 rounded-md p-2 text-sm w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-black"
+            >
+              <option value="">Filtrer par ingrédient</option>
+              <option value="huile_de_coconut">Huile de Coco</option>
+              <option value="huile_d_argane">Huile d'Argane</option>
+              <option value="huile_de_jojoba">Huile de Jojoba</option>
+              <option value="protéines_de_soja">Protéines de Soja</option>
+            </select>
+  
+            <button
+              id="resetFilters"
+              class="bg-gray-200 text-sm px-4 py-2 rounded hover:bg-gray-300 transition w-full sm:w-auto"
+            >
+              Réinitialiser
+            </button>
+          </div>
+  
+          <!-- Produits -->
+          <div
+            id="products"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            Ajouter au panier
-          </button>
-        </div>
-      </div>
-
-      <!-- Section ingrédients -->
-      <div class="mt-16 border-t pt-10">
-        <h2 class="text-2xl font-serif mb-4">Ingrédients Clés</h2>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 text-gray-700">
-          <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
-            <h3 class="font-semibold mb-1">Aloe Vera Bio</h3>
-            <p>Hydrate intensément et apaise les irritations.</p>
-          </div>
-          <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
-            <h3 class="font-semibold mb-1">Beurre de Karité</h3>
-            <p>Nourrit et protège la barrière cutanée.</p>
-          </div>
-          <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
-            <h3 class="font-semibold mb-1">Vitamine E</h3>
-            <p>Antioxydant naturel pour lutter contre le vieillissement.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Produits similaires -->
-      <div class="mt-16">
-        <h2 class="text-2xl font-serif mb-4">Produits Similaires</h2>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <a
-            href="#"
-            class="block group border rounded-2xl overflow-hidden hover:shadow-md transition"
-          >
-            <img
-              src="https://source.unsplash.com/400x300/?serum,skincare"
-              class="w-full h-48 object-cover"
-            />
-            <div class="p-3">
-              <h3 class="font-semibold text-sm">Sérum Éclat Vitamine C</h3>
-              <p class="text-sm text-gray-600 mt-1">24,90€</p>
+            <!-- Example Product -->
+             @foreach ($products as $product)
+            <div
+              data-type="shampooing"
+              data-ingredient="huile_de_coconut"
+              class="product-card border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition"
+            >
+              <img
+                src="{{ $product->image_url }}"
+                alt="{{ $product->name }}"
+                class="h-48 w-full object-cover"
+              />
+              <div class="p-4">
+                <h2 class="text-lg font-serif mb-1">{{ $product->name }}</h2>
+                <p class="text-sm text-gray-600 mb-2">
+                 {{-- Str::limit($product->description, 100) --}}
+                 {!! Str::limit(strip_tags($product->description),100) !!}
+                </p>
+              {{-- Boutons actions --}}
+              <div class="flex justify-between items-center gap-2">
+                <form action="{{ route('cart.store', $product->id) }}" method="POST">
+                  @csrf
+                  <button class="bg-[#493f35] text-white py-2 px-4 rounded-lg hover:bg-[#655b51] transition">
+                    <i class="fas fa-shopping-cart" title="Ajouter au panier"></i>
+                  </button>
+                </form>
+                <a href="{{ route('products.show', $product->slug) }}" class="bg-[#493f35] text-white py-2 px-4 rounded-lg hover:bg-[#655b51] transition">
+                  <i class="fas fa-eye" title="Voir le produit"></i>
+                </a>
+              </div>
+              </div>
             </div>
-          </a>
-          <a
-            href="#"
-            class="block group border rounded-2xl overflow-hidden hover:shadow-md transition"
-          >
-            <img
-              src="https://source.unsplash.com/400x300/?moisturizer,face"
-              class="w-full h-48 object-cover"
-            />
-            <div class="p-3">
-              <h3 class="font-semibold text-sm">Crème Nourrissante Nuit</h3>
-              <p class="text-sm text-gray-600 mt-1">21,00€</p>
-            </div>
-          </a>
-          <!-- Ajoute d’autres suggestions si besoin -->
-        </div>
-      </div>
-    </div>
+            @endforeach
+          </div>
+          <!-- Add a button that direct us to the category index page -->
+          <div class="mt-8 text-center">
+            <a
+              href="{{ url('categories') }}"
+              class="bg-gray-200 text-sm px-4 py-2 rounded hover:bg-gray-300 transition"
+            >
+              Voir toutes les catégories
+            </a>
+          </div>
+        </section>
+      @endif
 
+    </main>
+
+    <!-- JS : Filtres -->
+    <script>
+      const typeFilter = document.getElementById("filterType");
+      const ingFilter = document.getElementById("filterIngredient");
+      const resetBtn = document.getElementById("resetFilters");
+      const products = document.querySelectorAll(".product-card");
+
+      function filterProducts() {
+        const type = typeFilter.value;
+        const ing = ingFilter.value;
+
+        products.forEach((product) => {
+          const typeMatch = type === "" || product.dataset.type === type;
+          const ingMatch = ing === "" || product.dataset.ingredient === ing;
+
+          if (typeMatch && ingMatch) {
+            product.style.display = "block";
+          } else {
+            product.style.display = "none";
+          }
+        });
+      }
+
+      typeFilter.addEventListener("change", filterProducts);
+      ingFilter.addEventListener("change", filterProducts);
+      resetBtn.addEventListener("click", () => {
+        typeFilter.value = "";
+        ingFilter.value = "";
+        filterProducts();
+      });
+    </script>
 @endsection
+
