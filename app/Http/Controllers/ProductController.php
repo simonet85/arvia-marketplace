@@ -18,6 +18,8 @@ class ProductController extends Controller
         ->orderBy('updated_at', 'desc')
         ->paginate(9);
 
+
+
         return view('products.index', compact('products'));
     }
     public function store(Request $request)
@@ -215,12 +217,11 @@ class ProductController extends Controller
 
     public function json(Request $request)
     {
-        // $products = Product::with('category')->paginate(3);
-        // $query = Product::with('category');
+        $perPage = 10;
+
         $query = Product::with(['category', 'skinTypes', 'ingredients'])
         ->orderBy('created_at', 'desc')
         ->orderBy('updated_at', 'desc');
-
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
@@ -229,10 +230,52 @@ class ProductController extends Controller
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
-        return response()->json($query->paginate(9));
 
-        //return $query->paginate(3); // ou autre valeur par page
-        // return response()->json($products);
+        if($request->filled('price_max')) {
+            $query->where('price', '<=', $request->input('price_max'));
+        }
+
+        // sort by price
+        if ($request->filled('sort_by')) {
+            switch ($request->sort_by) {
+                case 'price_asc':
+                    $query->orderBy('price', 'asc');
+                    break;
+                case 'price_desc':
+                    $query->orderBy('price', 'desc');
+                    break;
+                case 'newest':
+                    $query->orderBy('created_at', 'desc');
+                    break;
+                case 'featured':
+                    // Filtre uniquement les produits en vedette
+                    $query->where('featured', true);
+                    break;
+                    // Filtrer les produits en vedette et trier par ordre décroissant
+                    //$query->orderByDesc('featured');
+                    //break;
+                default:
+                    // Optionnel : un tri par défaut
+                    $query->orderBy('created_at', 'desc');
+            }
+        }
+        // Filtrer par type de peau
+        if ($request->filled('skin_type')) {
+            $query->whereHas('skinTypes', function ($skinTypeQuery) use ($request) {
+            $skinTypeQuery->where('skin_types.id', $request->input('skin_type'));
+            });
+        }
+
+        $products = $query->paginate($perPage);
+
+        // Ajouter les accessors à chaque produit de la collection
+        // $products->getCollection()->transform(function ($product) {
+        //     $product->in_stock = $product->in_stock;
+        //     $product->formatted_price = $product->formatted_price;
+        //     $product->average_rating = $product->average_rating;
+        // });
+
+        return response()->json($products);
     }
     public function fetch()
     {
@@ -243,14 +286,5 @@ class ProductController extends Controller
 
         return response()->json($products);
     }
-    // public function fetchByCategory($categoryId)
-    // {
-    //     $products = Product::where('category_id', $categoryId)->get();
-    //     return response()->json($products);
-    // }
-    // public function fetchBySlug($slug)
-    // {
-    //     $product = Product::where('slug', $slug)->first();
-    //     return response()->json($product);
-    // }
+
 }

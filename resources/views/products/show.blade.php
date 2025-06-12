@@ -3,7 +3,6 @@
 {{-- Breadcrumbs::render('product.show', $product) --}}
 {{-- Breadcrumbs::render('product.show', $product->name, $product->slug) --}}
 
-{{-- dd($skinTypes) --}}
 <div class="max-w-6xl mx-auto px-4 py-10">
     <!-- Produit -->
     <div class="grid md:grid-cols-2 gap-10 items-start">
@@ -36,7 +35,7 @@
 
         <!-- Prix & stock -->
         <div class="text-2xl font-bold text-green-700">
-          {{ number_format($product->price, 2) }} CFA
+          {{ $product->formatted_price}} CFA
         </div>
         <div class="text-sm text-gray-600">
           @if ($product->stock > 0)
@@ -61,15 +60,51 @@
         @endif
 
         <!-- Formulaire Ajouter au panier -->
-        <form action="{{ route('cart.store', $product->id) }}" method="POST" class="flex items-center gap-4 mt-4">
+        <form action="{{ route('cart.store') }}" method="POST" class="inline-flex items-center gap-4 mt-4">
           @csrf
-          <input type="number" name="quantity" value="1" min="1" max="{{ $product->stock }}" class="w-16 border rounded px-2 py-1" />
+          <input type="hidden" name="product_id" value="{{ $product->id }}">
+          @if ($product->in_stock)
           <button type="submit" class="bg-[#655b51] text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-gray-700 transition">
+          {{-- !$product->in_stock ? 'disabled' : '' --}}
+            <i class="fas fa-shopping-cart" title="Ajouter au panier"></i>
             Ajouter au panier
           </button>
-          <button type="button" class="flex items-center justify-center w-8 h-8 bg-white rounded-full border border-gray-300 hover:border-gray-500 transition" title="Ajouter à la liste de souhaits">
-            <i class="fas fa-heart text-[#655b51]"></i>
-          </button>
+          @endif
+
+          <!-- <button
+              x-data="{
+            inWishlist: (JSON.parse(localStorage.getItem('wishlist') || '[]')).includes({{ $product->id }}),
+            toggleWishlist() {
+                let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+                if (this.inWishlist) {
+              wishlist = wishlist.filter(id => id !== {{ $product->id }});
+              this.inWishlist = false;
+                } else {
+              wishlist.push({{ $product->id }});
+              this.inWishlist = true;
+                }
+                localStorage.setItem('wishlist', JSON.stringify(wishlist));
+                window.dispatchEvent(new Event('wishlist-updated'));
+            }
+              }"
+              :class="inWishlist ? 'bg-red-100 border-red-400' : 'bg-white border-gray-300'"
+              @click="toggleWishlist"
+              class="flex items-center justify-center w-8 h-8 rounded-full border hover:border-red-500 transition"
+              title="Ajouter à la liste de souhaits"
+          >
+              <i :class="inWishlist ? 'fas fa-heart text-red-500' : 'far fa-heart text-[#655b51]'"></i>
+          </button> -->
+       
+        </form>
+        <form method="POST" action="{{ route('wishlist.toggle') }}" class="inline-flex items-center gap-4 mt-4">
+            @csrf
+            <input type="hidden" name="product_id" value="{{ $product->id }}">
+            <button type="submit" class="group bg-[#655b51] px-6 py-3 rounded-full text-sm font-medium transition hover:bg-gray-700 
+              {{ auth()->user() && auth()->user()->wishlistItems->where('product_id', $product->id)->count() ? 'bg-red-100 border-red-400' : 'bg-white border-gray-300' }}
+              " title="Ajouter à la liste de souhaits">
+              <i class="far fa-heart text-[#655b51] group-hover:text-white"></i>
+              Ajouter à la liste de souhaits
+            </button>
         </form>
 
         <!-- Avantages client -->
@@ -131,7 +166,7 @@
                 <img src="{{ asset('storage/' . $similarProduct->image) }}" alt="{{ $similarProduct->name }}" class="w-full h-48 object-cover" />
                 <div class="p-3">
                   <h3 class="font-semibold text-sm">{{ $similarProduct->name }}</h3>
-                  <p class="text-sm text-gray-600 mt-1">{{ number_format($similarProduct->price, 2) }} CFA</p>
+                  <p class="text-sm text-gray-600 mt-1">{{ $similarProduct->formatted_price }} CFA</p>
                 </div>
               </a>
             @endforeach

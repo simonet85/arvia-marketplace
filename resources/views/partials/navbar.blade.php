@@ -24,9 +24,15 @@
         class="absolute top-12 right-0 w-48 p-2 border rounded-md text-sm transition-all duration-300 shadow-md z-50 bg-white"
       />
 
-      <a href="{{route('wishlist.index')}}" class="relative hover:text-black transition">
-        <i class="fas fa-heart"></i>
-        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">2</span>
+      <!-- Wishlist -->
+      <a href="{{ route('wishlist.index') }}" class="relative hover:text-black transition">
+          <i class="fas fa-heart"></i>
+          @php $count = Auth::check() ? Auth::user()->wishlistItems()->count() : 0; @endphp
+          @if($count > 0)
+            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ $count }}</span>
+          @else
+            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+          @endif
       </a>
 
       @auth

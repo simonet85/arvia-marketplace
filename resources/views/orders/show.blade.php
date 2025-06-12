@@ -7,43 +7,50 @@
     <div class="mb-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <div class="mb-2"><span class="font-semibold">Customer:</span> {{ $order->first_name }} {{ $order->last_name }}</div>
-          <div class="mb-2"><span class="font-semibold">Email:</span> {{ $order->email }}</div>
-          <div class="mb-2"><span class="font-semibold">Phone:</span> {{ $order->phone }}</div>
+          <div class="mb-2"><span class="font-semibold">Nom:</span> {{ $order->user->name }}</div>
+          <div class="mb-2"><span class="font-semibold">Email:</span> {{ $order->user->email }}</div>
+          <div class="mb-2"><span class="font-semibold">Phone:</span> {{ $order->user->phone }}</div>
         </div>
         <div>
-          <div class="mb-2"><span class="font-semibold">Shipping Address:</span> {{ $order->shipping_address }}, {{ $order->city }}, {{ $order->state }} {{ $order->zip }}</div>
-          <div class="mb-2"><span class="font-semibold">Status:</span>
+          <div class="mb-2"><span class="font-semibold">Adresse de Livraison:</span> {{ $order->shipping_address }}</div>
+          <div class="mb-2"><span class="font-semibold">Statut:</span>
             <span class="px-2 py-1 rounded text-xs font-semibold
-              @if($order->status === 'pending') bg-yellow-100 text-yellow-800
-              @elseif($order->status === 'processing') bg-blue-100 text-blue-700
-              @elseif($order->status === 'shipped') bg-purple-100 text-purple-700
-              @elseif($order->status === 'delivered') bg-green-100 text-green-700
-              @elseif($order->status === 'cancelled') bg-red-100 text-red-600
+              @if($order->status === \App\Models\Order::STATUS_PENDING) bg-yellow-100 text-yellow-800
+              @elseif($order->status === \App\Models\Order::STATUS_COMPLETED) bg-green-100 text-green-700
+              @elseif($order->status === \App\Models\Order::STATUS_CANCELLED) bg-red-100 text-red-600
               @else bg-gray-100 text-gray-600 @endif">
               {{ ucfirst($order->status) }}
             </span>
           </div>
-          <div class="mb-2"><span class="font-semibold">Payment:</span>
+          <div class="mb-2"><span class="font-semibold">Paiement:</span>
             <span class="px-2 py-1 rounded text-xs font-semibold
-              @if($order->payment_status === 'paid') bg-green-100 text-green-700
-              @elseif($order->payment_status === 'refunded') bg-blue-100 text-blue-700
+              @if($order->payment_status === \App\Models\Order::PAYMENT_STATUS_PAID) bg-green-100 text-green-700
+              @elseif($order->payment_status === \App\Models\Order::PAYMENT_STATUS_REFUNDED) bg-blue-100 text-blue-700
               @else bg-gray-100 text-gray-600 @endif">
               {{ ucfirst($order->payment_status) }}
+            </span>
+          </div>
+            <div class="mb-2"><span class="font-semibold">Priorité:</span>
+            <span class="px-2 py-1 rounded text-xs font-semibold
+              @if($order->priority === \App\Models\Order::PRIORITY_HIGH) bg-red-100 text-red-700
+              @elseif($order->priority === \App\Models\Order::PRIORITY_MEDIUM) bg-yellow-100 text-yellow-700
+              @elseif($order->priority === \App\Models\Order::PRIORITY_LOW) bg-gray-100 text-gray-700
+              @endif">
+              {{ $order->priority }}
             </span>
           </div>
           <div class="mb-2"><span class="font-semibold">Date:</span> {{ $order->created_at->format('Y-m-d H:i') }}</div>
         </div>
       </div>
     </div>
-    <h3 class="text-lg font-semibold mb-2">Order Items</h3>
+    <h3 class="text-lg font-semibold mb-2">Article</h3>
     <div class="overflow-x-auto mb-6">
       <table class="min-w-full table-auto text-sm text-left text-gray-700">
         <thead class="bg-[#f9f8f4] text-xs uppercase">
           <tr>
-            <th class="px-4 py-2 font-semibold">Product</th>
-            <th class="px-4 py-2 font-semibold">Qty</th>
-            <th class="px-4 py-2 font-semibold">Price</th>
+            <th class="px-4 py-2 font-semibold">Produit</th>
+            <th class="px-4 py-2 font-semibold">Qté</th>
+            <th class="px-4 py-2 font-semibold">Prix</th>
             <th class="px-4 py-2 font-semibold">Total</th>
           </tr>
         </thead>
@@ -62,7 +69,7 @@
     <div class="text-right text-lg font-bold">
       Total: {{ number_format($order->total_amount, 2) }} FCFA
     </div>
-    <a href="{{ route('orders.index') }}" class="inline-block mt-6 text-[#493f35] hover:underline"><i class="fas fa-arrow-left"></i> Back to Orders</a>
+    <a href="{{ route('orders.index') }}" class="inline-block mt-6 text-[#493f35] hover:underline"><i class="fas fa-arrow-left"></i> Retour aux Commandes</a>
   </section>
 </main>
 @endsection

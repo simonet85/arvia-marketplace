@@ -26,12 +26,19 @@ class Product extends Model
         'image',
         'featured'
     ];
+
     protected $casts = [
         'bestseller' => 'boolean',
         'popular' => 'boolean',
         'featured' => 'boolean',
     ];
-    protected $appends = ['image_url'];
+
+    protected $appends = ['image_url',
+        'in_stock',
+        'formatted_price',
+        'average_rating'
+    ];
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -63,5 +70,22 @@ class Product extends Model
     public function orders()
     {
         return $this->belongsToMany(Order::class, 'order_items')->withPivot('quantity', 'price', 'status');
+    }
+
+    public function reviews(){
+        return $this->hasMany(Review::class);
+    }
+
+    public function getFormattedPriceAttribute()
+    {
+        return number_format($this->price, 2, ',', '.');
+    }
+    public function getInStockAttribute()
+    {
+        return $this->stock > 0;
+    }
+    public function getAverageRatingAttribute(){
+        $avg = $this->reviews()->avg('rating');
+        return $avg ? round($avg, 1) : ($this->rating ?? 4.5);
     }
 }

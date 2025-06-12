@@ -26,4 +26,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function getFormattedPriceAttribute()
+    {
+        return number_format($this->price, 2, ',', '.');
+    }
 }

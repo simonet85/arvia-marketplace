@@ -113,26 +113,26 @@
                                 <div class="font-medium">{{ $item->product->name }}</div>
                                 <div class="text-xs text-gray-500">Qty: {{ $item->quantity }}</div>
                             </div>
-                            <div class="font-semibold">{{ number_format($item->product->price * $item->quantity, 2) }} FCFA</div>
+                            <div class="font-semibold">{{ number_format($item->product->price * $item->quantity, 2, ',', '.') }} FCFA</div>
                         </div>
                         @endforeach
                     </div>
                     <div class="border-t mt-4 pt-4 space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <span>Subtotal</span>
-                            <span class="font-medium">{{ number_format($subtotal, 2) }} FCFA</span>
+                            <span>Sous Total</span>
+                            <span class="font-medium">{{ number_format($subtotal, 2, ',', '.') }} FCFA</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Shipping</span>
-                            <span class="font-medium">{{ $shipping == 0 ? 'Free' : number_format($shipping, 2) . ' FCFA' }}</span>
+                            <span>Expedition</span>
+                            <span class="font-medium">{{ $shipping == 0 ? 'Free' : number_format($shipping, 2, ',', '.') . ' FCFA' }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Tax</span>
-                            <span class="font-medium">{{ number_format($tax, 2) }} FCFA</span>
-                        </div>
+                            <span>Taxe</span>
+                            <span class="font-medium">{{ number_format($tax, 2, ',', '.') }} FCFA</span>
+                        </div> 
                         <div class="flex justify-between text-lg font-bold pt-2">
                             <span>Total</span>
-                            <span>{{ number_format($total, 2) }} FCFA</span>
+                            <span>{{ number_format($total, 2, ',', '.') }} FCFA</span>
                         </div>
                     </div>
                     <ul class="mt-4 space-y-2 text-sm text-[#493f35]">
@@ -141,7 +141,7 @@
                         <li class="flex items-center gap-2"><i class="fas fa-undo text-green-500"></i> Remboursement guarantie avant 30 jours</li>
                     </ul>
                     <button type="submit" class="w-full bg-[#493f35] text-white font-semibold py-3 rounded-lg mt-6 hover:bg-[#362c22] transition">
-                        Commander - {{ number_format($total, 2) }} FCFA
+                        Commander - {{ number_format($total, 2, ',', '.') }} FCFA
                     </button>
                     <a href="{{ route('cart.index') }}" class="w-full border border-[#493f35] text-[#493f35] font-semibold py-3 rounded-lg mt-3 hover:bg-[#f9f8f4] transition flex items-center justify-center gap-2">
                         <i class="fas fa-arrow-left"></i> Retour au Panier

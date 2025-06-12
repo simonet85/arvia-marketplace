@@ -34,6 +34,7 @@ class CategoryController extends Controller
         //return Category::latest()->paginate(3); // par exemple 5 éléments par page
     }
     
+    
     /**
      * Show the form for creating a new resource.
      */

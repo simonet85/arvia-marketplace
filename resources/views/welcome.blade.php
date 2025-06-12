@@ -39,7 +39,6 @@
   
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Boucle pour afficher les catégories -->
-    {{-- {{ dd($categories) }}  --}}
     @foreach ($categories as $category)
       <!-- Carte Catégorie -->
       <a href="{{route('categories.show', ['slug' => $category->slug])}}">
@@ -80,7 +79,8 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       @foreach ($featuredProducts as $product)
-        <div x-data="productCard({{ $product->id }}, '{{ $product->name }}', {{ $product->price }}, '{{ $product->image ? asset('storage/' . $product->image) : 'https://via.placeholder.com/300x300?text=No+Image' }}')"
+      {{-- dd($product->image_url) --}}
+        <div x-data="productCard({{ $product->id }}, '{{ $product->name }}', {{ $product->price }}, '{{ $product->image_url ??  'https://via.placeholder.com/300x300?text=No+Image' }}')"
             class="bg-white shadow-md rounded-2xl overflow-hidden p-4 transition duration-300 transform hover:scale-105">
 
           <img :src="image" :alt="name"
@@ -96,11 +96,17 @@
           <div class="text-green-600 text-sm font-medium mb-1" x-show="successMessage" x-text="successMessage"></div>
 
           <div class="flex justify-between items-center gap-2">
-            <button @click="addToCart" :disabled="loading"
-                    class="bg-[#493f35] text-white py-2 px-4 rounded-lg hover:bg-[#655b51] transition disabled:opacity-50">
+            
+            <form action="{{ route('cart.store') }}" method="POST">
+              @csrf
+              <input type="hidden" name="product_id" value="{{ $product->id }}">
+              <button type="submit"
+                      class="bg-[#493f35] text-white py-2 px-4 rounded-lg hover:bg-[#655b51] transition disabled:opacity-50"
+                      :disabled="loading">
               <i class="fas fa-shopping-cart" title="Ajouter au panier"></i>
-            </button>
-
+              </button>
+            </form>
+    
             <a href="{{ route('products.show', $product->slug) }}"
               class="bg-[#493f35] text-white py-2 px-4 rounded-lg hover:bg-[#655b51] transition">
               <i class="fas fa-eye" title="Voir le produit"></i>

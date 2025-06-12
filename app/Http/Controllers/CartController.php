@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\CartItem;
+use App\Models\WishlistItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,7 +33,6 @@ class CartController extends Controller
 
     public function store(Request $request)
     {
-        // dd($request->all());
         $request->validate(['product_id' => 'required|exists:products,id']);
 
         $cartItem = CartItem::firstOrCreate(
@@ -44,15 +44,29 @@ class CartController extends Controller
             ['quantity' => 0]
         );
 
-        // dd($cartItem);
+        if (Auth::check()) {
+            WishlistItem::where('user_id', Auth::id())
+                ->where('product_id', $request->product_id)
+                ->delete();
+        }
+
+  
         // If the item already exists, increment the quantity
         if ($cartItem->exists) {
             $cartItem->increment('quantity');
         }
+
+            // Support AJAX/fetch and classic POST
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Produit ajouté au panier.',
+                'cartItem' => $cartItem->fresh('product')
+            ]);
+        }
         // retourner à la page cart
         return redirect()->route('cart')->with('success', 'Produit ajouté au panier.');
 
-        // return response()->json(['success' => true]);
     }
 
 
@@ -117,9 +131,16 @@ class CartController extends Controller
             return response()->json(['error' => 'Panier vide.'], 404);
         }
 
-        $cartItem->quantity += $delta;
-        if ($cartItem->quantity < 1) {
+        $product = $cartItem->product;
+        $newQuantity = $cartItem->quantity + $delta;
+
+        // Empêcher de dépasser le stock
+        if ($newQuantity > $product->stock) {
+            $cartItem->quantity = $product->stock;
+        } elseif ($newQuantity < 1) {
             $cartItem->quantity = 1;
+        } else {
+            $cartItem->quantity = $newQuantity;
         }
         $cartItem->save();
 

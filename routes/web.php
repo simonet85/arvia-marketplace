@@ -102,8 +102,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/orders','index')->name('orders.index');
     Route::get('/admin/orders/create','create')->name('orders.create');
     Route::get('/admin/orders/{order}','show')->name('orders.show');
+    Route::get('/admin/orders/{order}/edit','edit')->name('orders.edit');
     Route::put('/admin/orders/{order}','update')->name('orders.update');
     Route::delete('/admin/orders/{order}','destroy')->name('orders.destroy');
+    Route::post('/orders/{order}/cancel', 'cancel')->name('orders.cancel');
     Route::get('/admin/suivi-commandes', 'suivi')->name('suivi.index');
   });
 });
@@ -119,25 +121,19 @@ Route::middleware('auth')->group(function () {
     Route::put('/cart/update/{item}', 'update')->name('cart.update');
   });
 });
-// Route::get('/cart', fn () => view('cart.index'))->name('cart.index');
 
-Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+// Wishlist routes
+Route::middleware('auth')->group(function () {
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+});
 
 Route::controller(CheckoutController::class)->group(function () {
   Route::get('/checkout', 'index')->name('checkout.index');
   Route::post('/checkout', 'store')->name('checkout.store');
 });
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-  Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-});
+Route::get('/dashboard', [AdminController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
-
-
-// Route::middleware(['auth', 'verified'])->group(function () {
-//   Route::get('/dashboard', function () {
-//     return view('dashboard');
-//   })->name('dashboard');
-// });
 
 require __DIR__.'/auth.php'; 

@@ -86,6 +86,8 @@ class CheckoutController extends Controller
                 'price'      => $item->product->price,
                 'status'     => 'En attente',
             ]);
+            // Update stock
+            $item->product->decrement('stock', $item->quantity);
         }
 
         // Clear the cart

@@ -19,7 +19,14 @@
           >
         </div>
         <!-- Right icons -->
-        <div class="flex items-center gap-4 text-xl text-[#7a6b5f] relative">
+        <!-- <div x-data="{
+          wishlistCount: (JSON.parse(localStorage.getItem('wishlist') || '[]')).length,
+          init() {
+            window.addEventListener('wishlist-updated', () => {
+                this.wishlistCount = (JSON.parse(localStorage.getItem('wishlist') || '[]')).length;
+            });
+          }
+        }" x-init="init()"  class="flex items-center gap-4 text-xl text-[#7a6b5f] relative"> -->
           <!-- Search Toggle -->
           <button id="search-toggle" class="hover:text-black transition">
             <i class="fas fa-search"></i>
@@ -34,16 +41,12 @@
           />
 
           <!-- Wishlist -->
-          <a
-            href="{{url('/wishlist');}}"
-            class="relative hover:text-black transition"
-          >
-            <i class="fas fa-heart"></i>
-            <span
-              id="wishlist-count"
-              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
-              >2</span
-            >
+          <a href="{{ route('wishlist.index') }}" class="relative hover:text-black transition">
+              <i class="fas fa-heart"></i>
+              @php $count = Auth::user()->wishlistItems()->count(); @endphp
+              @if($count > 0)
+                <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ $count }}</span>
+              @endif
           </a>
 
           <!-- User Account -->

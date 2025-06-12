@@ -30,12 +30,15 @@
               </div>
               <div class="flex space-x-2">
                 <div class="flex flex-col sm:flex-row gap-2">
-                  <button @click="updateQuantity(item.id, -1)" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded block w-full sm:w-auto">
+
+                  <button @click=" updateQuantity(item.id, -1)" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded block w-full sm:w-auto">
                     <i class="fas fa-minus"></i>
                   </button>
-                  <button @click="updateQuantity(item.id, 1)" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded block w-full sm:w-auto">
+
+                  <button @click="if (item.quantity < item.product.stock) updateQuantity(item.id, 1)" :disabled="item.quantity >= item.product.stock" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded block w-full sm:w-auto disabled:opacity-50">
                     <i class="fas fa-plus"></i>
                   </button>
+
                   <button @click="removeItem(item.id)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded block w-full sm:w-auto">
                     <i class="fas fa-trash"></i>
                   </button>
